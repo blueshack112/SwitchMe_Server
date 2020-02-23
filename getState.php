@@ -10,10 +10,23 @@ class Response {
     var $successful;
     var $colState;
     var $updateTime;
+    var $volts;
+    var $amps;
+    var $power;
+    var $energy;
+    var $cost;
+    
+    
     function __construct () {
         $this->successful = false;
         $this->colState = "OFF";
         $this->updateTime = date("F d, Y h:i:s A", time());
+	$this->volts = 0.0;
+	$this->amps = 0.0;
+	$this->power = 0.0;
+	$this->energy = 0.0;
+	$this->cost = 0.0;
+
     }
 }
 
@@ -47,6 +60,13 @@ if ($getQueryResult) {
     $response->successful = true;
     $response->colState = $row['col_state'];
     $response->updateTime = $row['created_at'];
+    $response->volts = $row['volts'];
+    $response->amps = $row['amps'];
+    $response->power = $row['power'];
+    $response->energy = $row['energy'];
+    $response->cost = $row['cost'];
+
+    
     echo (json_encode($response));
 } else {
     $response = new Response();
