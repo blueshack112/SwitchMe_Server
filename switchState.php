@@ -1,7 +1,8 @@
 <?php
 header("Content-type:application/json");
-$_SERVER['CONTENT_TYPE'] = "application/x-www-form-urlencoded"; 
-error_reporting (E_ALL ^ E_WARNING && E_NOTICE);
+$_SERVER['CONTENT_TYPE'] = "application/x-www-form-urlencoded";
+error_reporting(E_ALL ^ E_WARNING && E_NOTICE);
+date_default_timezone_set("Asia/Karachi");
 
 //Connection properties 
 $servername = "localhost";
@@ -22,29 +23,43 @@ $state = $_POST["state"];
 $time = $_POST["time"];
 $id = $_POST["id"];
 
-// Truncate table
+// Update Queries
 if ($state == "OFF") {
-$truncateQuery = "UPDATE switch_me.tbl_state SET col_state = 'OFF', created_at = '$time' WHERE id = $id";
-$truncateQueryResult = mysqli_query($conn, $truncateQuery);
-if ($truncateQueryResult) {
-    echo (json_encode($id));
+    $updateQuery = "UPDATE switch_me.tbl_state SET col_state = 'OFF', created_at = '$time', energy = 0.4 WHERE id = $id";
+    $updateQueryResult = mysqli_query($conn, $updateQuery);
+    if ($updateQueryResult) {
+        // Update into logs when turning off
+        // First, get the energy usage
+        $selectEnergyUsageQuery = "SELECT energy FROM switch_me.tbl_state WHERE id = $id;";
+        $selectEnergyUsageQueryResult = mysqli_query($conn, $selectEnergyUsageQuery);
+        $row = mysqli_fetch_assoc($selectEnergyUsageQueryResult);
+        $energyUsage = $row['energy'];
 
-//    echo (json_encode([$successful = true]));
+        // Run update query
+        $updateLogsQuery = "UPDATE switch_me.tbl_log SET ended_at = '$time', energy_usage = $energyUsage, transaction_status = 'complete' WHERE relay_id = $id AND transaction_status = 'pending';";
+        $updateLogsQueryResult = mysqli_query($conn, $updateLogsQuery);
+        if ($updateLogsQueryResult) {
+            echo (json_encode([$successful = true]));
+        } else {
+            echo (json_encode([$successful = false]));
+        }
+    } else {
+        echo (json_encode([$successful = false]));
+    }
 } else {
-    echo (json_encode($truncateQuery));
-//    echo (json_encode([$successful = false]));
-}
+    $updateQuery = "UPDATE switch_me.tbl_state SET col_state = 'ON', created_at = '$time' WHERE id = $id";
+    $updateQueryResult = mysqli_query($conn, $updateQuery);
 
-} else {
-// Insert new state
-$insertQuery = "UPDATE switch_me.tbl_state SET col_state = 'ON', created_at = '$time' WHERE id = $id";
-$insertQueryResult = mysqli_query($conn, $insertQuery);
-
-if ($insertQueryResult) {
-    echo (json_encode($id));
-//    echo (json_encode([$successful = true]));
-} else {
-    echo (json_encode($truncateQuery));
-//    echo (json_encode([$successful = false]));
-}
+    if ($updateQueryResult) {
+        // Insert into logs when turning on
+        $insertQuery = "INSERT INTO switch_me.tbl_log (relay_id, started_at) VALUES ($id, '$time');";
+        $insertQueryResult = mysqli_query($conn, $insertQuery);
+        if ($insertQueryResult) {
+            echo (json_encode([$successful = true]));
+        } else {
+            echo (json_encode([$successful = false]));
+        }
+    } else {
+        echo (json_encode([$successful = false]));
+    }
 }

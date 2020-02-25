@@ -1,7 +1,7 @@
 <?php
 header("Content-type:application/json");
-$_SERVER['CONTENT_TYPE'] = "application/x-www-form-urlencoded"; 
-error_reporting (E_ALL ^ E_WARNING && E_NOTICE);
+$_SERVER['CONTENT_TYPE'] = "application/x-www-form-urlencoded";
+error_reporting(E_ALL ^ E_WARNING && E_NOTICE);
 
 //Connection properties 
 $servername = "localhost";

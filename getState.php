@@ -1,11 +1,9 @@
-
-
 <?php
 header("Content-type:application/json");
 $_SERVER['CONTENT_TYPE'] = "application/x-www-form-urlencoded"; 
 error_reporting (E_ALL ^ E_WARNING && E_NOTICE);
 
-//Response class
+// Response class
 class Response {
     var $successful;
     var $colState;
@@ -30,30 +28,29 @@ class Response {
     }
 }
 
-//Connection properties 
+// Connection properties 
 $servername = "localhost";
 $username = "ebad";
 $password = "ebad";
 $dbName = "switch_me";
 
-//Create connection
+// Create connection
 $conn = new mysqli($servername, $username, $password, $dbName);
 
-//Check connection
+// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-//Extract data from POST
-$state = $_POST["state"];
+// Extract data from POST
+$id = $_POST["id"];
 
 // Insert new state
-$getQuery = "SELECT * FROM switch_me.tbl_state;";
+$getQuery = "SELECT * FROM switch_me.tbl_state WHERE id = $id;";
 $getQueryResult = mysqli_query($conn, $getQuery);
-
 $successful = $getQueryResult;
 
-if ($getQueryResult) {
+if ($successful) {
     $row = mysqli_fetch_assoc($getQueryResult);
     
     $response = new Response();
@@ -64,12 +61,13 @@ if ($getQueryResult) {
     $response->amps = $row['amps'];
     $response->power = $row['power'];
     $response->energy = $row['energy'];
-    $response->cost = $row['cost'];
 
-    
+    $cost = ($row['energy']/1000 ) * 25;
+    $cost = number_format((float) $cost, 2, '.', ''); 
+
+    $response->cost = $cost;
     echo (json_encode($response));
 } else {
     $response = new Response();
     echo (json_encode($response));
 }
-?>
